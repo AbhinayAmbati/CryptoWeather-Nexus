@@ -117,9 +117,13 @@ const CryptoPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">Cryptocurrency Dashboard</h1>
-        <p className="text-gray-500 text-center mb-8">Real-time prices and market data</p>
-        
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-8 shadow-lg">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center">
+            <Globe className="mr-3 text-indigo-600 w-8 h-8" />
+            Cryptocurrency Dashboard
+          </h1>
+          <p className="text-gray-600">Real-time prices and market data</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cryptocurrencies.map((crypto) => {
             const data = cryptoData[crypto.id];

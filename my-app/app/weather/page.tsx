@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {Card} from '@/components/ui/card';
 import { getCurrentWeather, getForecast, WeatherData, ForecastData } from '@/services/weatherService';
-import { Cloud, CloudRain, Droplets, Wind, Gauge, Sun, Thermometer, Calendar, Loader } from 'lucide-react';
+import { Cloud, CloudRain, Droplets, Wind, Gauge, Sun, Thermometer, Calendar, Loader, Globe } from 'lucide-react';
 
 const cities = [
   { name: 'New York', lat: 40.7128, lon: -74.0060, icon: '🌆', color: '#4361ee' },
@@ -104,8 +104,14 @@ const WeatherPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">Weather Dashboard</h1>
-        <p className="text-gray-600 text-center mb-8">Real-time weather updates for major cities</p>
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-8 shadow-lg">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center">
+            <Globe className="mr-3 text-indigo-600 w-8 h-8" />
+            Weather Dashboard
+          </h1>
+          <p className="text-gray-600">Real-time weather updates for major cities</p>
+        </div>
+        
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cities.map((city) => {
