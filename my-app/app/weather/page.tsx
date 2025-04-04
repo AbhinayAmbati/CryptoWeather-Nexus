@@ -43,6 +43,7 @@ const WeatherPage = () => {
               error: null
             }
           }));
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           setWeatherData(prev => ({
             ...prev,

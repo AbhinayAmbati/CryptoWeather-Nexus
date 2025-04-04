@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   LineChart,
   Line,
@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   TooltipProps,
-} from 'recharts';
+} from "recharts";
 
 interface PriceChartProps {
   data: Array<[number, number]>;
@@ -16,11 +16,12 @@ interface PriceChartProps {
 }
 
 interface ChartData {
+  [key: string]: string | number;
   time: string;
   price: number;
 }
 
-const PriceChart: React.FC<PriceChartProps> = ({ data, color = '#8884d8' }) => {
+const PriceChart: React.FC<PriceChartProps> = ({ data, color = "#8884d8" }) => {
   // Transform the data for the chart
   const chartData: ChartData[] = data.map(([timestamp, price]) => ({
     time: new Date(timestamp).toLocaleTimeString(),
@@ -35,12 +36,18 @@ const PriceChart: React.FC<PriceChartProps> = ({ data, color = '#8884d8' }) => {
     })}`;
   };
 
-  const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+  const CustomTooltip: React.FC<TooltipProps<number, string>> = ({
+    active,
+    payload,
+    label,
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-2 border border-gray-200 rounded shadow">
           <p className="text-sm text-gray-600">{`Time: ${label}`}</p>
-          <p className="text-sm font-medium">{`Price: ${formatPrice(payload[0].value || 0)}`}</p>
+          <p className="text-sm font-medium">{`Price: ${formatPrice(
+            payload[0].value || 0
+          )}`}</p>
         </div>
       );
     }
@@ -54,13 +61,14 @@ const PriceChart: React.FC<PriceChartProps> = ({ data, color = '#8884d8' }) => {
         <XAxis
           dataKey="time"
           tick={{ fontSize: 12 }}
-          tickFormatter={(value: string) => value.split(':').slice(0, 2).join(':')}
+          tickFormatter={(value: string) => value.split(":").slice(0, 2).join(":")}
+          allowDataOverflow={true}
         />
         <YAxis
           tick={{ fontSize: 12 }}
           tickFormatter={(value: number) => `$${value.toLocaleString()}`}
         />
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={CustomTooltip} />
         <Line
           type="monotone"
           dataKey="price"
@@ -74,4 +82,4 @@ const PriceChart: React.FC<PriceChartProps> = ({ data, color = '#8884d8' }) => {
   );
 };
 
-export default PriceChart; 
+export default PriceChart;
