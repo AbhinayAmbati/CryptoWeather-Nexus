@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {Card} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { getCryptoData, getCryptoHistory, CryptoData } from '@/services/cryptoService';
-import { ArrowUp, ArrowDown, DollarSign, BarChart, Layers, Globe } from 'lucide-react';
+import { ArrowUp, ArrowDown, DollarSign, BarChart, Layers, Globe, TrendingUp } from 'lucide-react';
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
 const cryptocurrencies = [
   { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', color: '#F7931A', icon: '₿' },
@@ -15,6 +16,7 @@ interface CryptoState extends CryptoData {
   loading: boolean;
   error: string | null;
   history: Array<[number, number]>;
+  chartData: Array<{time: string, price: number}>;
 }
 
 const CryptoPage = () => {
@@ -33,6 +35,7 @@ const CryptoPage = () => {
         loading: true,
         error: null,
         history: [],
+        chartData: [],
       }
     }), {})
   );
@@ -49,6 +52,7 @@ const CryptoPage = () => {
             loading: false,
             error: null,
             history: [],
+            chartData: [],
           }
         }), {});
 
@@ -61,16 +65,35 @@ const CryptoPage = () => {
         for (const crypto of cryptocurrencies) {
           try {
             const history = await getCryptoHistory(crypto.id);
+          
+            // if (!Array.isArray(history)) {
+            //   throw new Error(`Invalid history data for ${crypto.id}`);
+            // }
+          
+            // Convert history data to chart format
+            const chartData = history.map(([timestamp, price]) => {
+              const date = new Date(timestamp);
+              const hours = date.getHours().toString().padStart(2, '0');
+              const minutes = date.getMinutes().toString().padStart(2, '0');
+              return {
+                time: `${hours}:${minutes}`,
+                price,
+                fullTime: date
+              };
+            });
+          
             setCryptoData(prev => ({
               ...prev,
               [crypto.id]: {
                 ...prev[crypto.id],
                 history,
+                chartData,
               }
             }));
           } catch (error) {
             console.error(`Error fetching history for ${crypto.id}:`, error);
           }
+          
         }
       } catch (error) {
         console.error('Error fetching crypto data:', error);
@@ -99,10 +122,21 @@ const CryptoPage = () => {
         const newState = { ...prev };
         Object.entries(data).forEach(([id, price]) => {
           if (newState[id]) {
+            const newPrice = Number(price);
             newState[id] = {
               ...newState[id],
-              currentPrice: Number(price)
+              currentPrice: newPrice,
+              // Add the new price point to chart data
+              chartData: [...newState[id].chartData, {
+                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                price: newPrice
+              }]
             };
+            
+            // Keep only last 24 hours of data points
+            if (newState[id].chartData.length > 24) {
+              newState[id].chartData = newState[id].chartData.slice(-24);
+            }
           }
         });
         return newState;
@@ -114,15 +148,29 @@ const CryptoPage = () => {
     };
   }, []);
 
+  // Custom tooltip for the chart
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 border border-gray-200 shadow-md rounded text-xs">
+          <p className="font-semibold">{`${payload[0].payload.time}`}</p>
+          <p className="text-gray-700">${payload[0].value.toFixed(2)}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-8 shadow-lg">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-8 shadow-lg">
           <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center">
             <Globe className="mr-3 text-indigo-600 w-8 h-8" />
             Cryptocurrency Dashboard
           </h1>
-          <p className="text-gray-600">Real-time prices and market data</p>
+          <p className="text-gray-600">Real-time prices and market data with 24-hour history</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cryptocurrencies.map((crypto) => {
@@ -131,7 +179,7 @@ const CryptoPage = () => {
             return (
               <Card key={crypto.id} className="overflow-hidden border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="p-6">
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center space-x-3">
                       <div 
                         className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold"
@@ -179,6 +227,46 @@ const CryptoPage = () => {
                             <p className="text-3xl font-bold mt-1">
                               ${data.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
+                          </div>
+                        </div>
+                        
+                        {/* Price history chart */}
+                        <div className="bg-white p-4 rounded-lg shadow-sm">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <TrendingUp className="text-gray-500" size={18} />
+                            <p className="text-sm font-medium text-gray-600">24h Price History</p>
+                          </div>
+                          <div className="h-32">
+                            {data.chartData.length > 0 ? (
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.chartData.slice(-24)}>
+                                  <XAxis 
+                                    dataKey="time" 
+                                    tick={{fontSize: 10}}
+                                    tickFormatter={(tick) => tick}
+                                    interval="preserveStartEnd"
+                                  />
+                                  <YAxis 
+                                    domain={['dataMin', 'dataMax']} 
+                                    tick={{fontSize: 10}}
+                                    tickFormatter={(tick) => `$${tick.toLocaleString(undefined, {maximumFractionDigits: 0})}`}
+                                  />
+                                  <Tooltip content={CustomTooltip} />
+                                  <Line 
+                                    type="monotone" 
+                                    dataKey="price" 
+                                    stroke={crypto.color}
+                                    strokeWidth={2}
+                                    dot={false}
+                                    activeDot={{ r: 4 }}
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            ) : (
+                              <div className="flex items-center justify-center h-full text-gray-400">
+                                Loading historical data...
+                              </div>
+                            )}
                           </div>
                         </div>
                         
