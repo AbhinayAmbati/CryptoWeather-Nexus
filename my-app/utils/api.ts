@@ -81,20 +81,32 @@ export async function fetchWeatherData(cities: string[]): Promise<WeatherData[]>
 
 export async function fetchCryptoData(coins: string[]): Promise<CryptoData[]> {
   try {
+    console.log('Fetching crypto data for:', coins);
     const response = await fetch(
-      `${COINGECKO_API_URL}/simple/price?ids=${coins.join(',')}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
+      `${COINGECKO_API_URL}/coins/markets?vs_currency=usd&ids=${coins.join(',')}&order=market_cap_desc&sparkline=false&price_change_percentage=24h`
     );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
-    
-    return coins.map(coin => ({
-      id: coin,
-      name: coin.charAt(0).toUpperCase() + coin.slice(1),
-      current_price: data[coin].usd,
-      price_change_percentage_24h: data[coin].usd_24h_change,
-      market_cap: data[coin].usd_market_cap,
+    console.log('Crypto API Response:', data);
+
+    if (!data || data.length === 0) {
+      throw new Error('No data returned from the API');
+    }
+
+    return data.map((coin: any) => ({
+      id: coin.id,
+      name: coin.name,
+      current_price: coin.current_price,
+      price_change_percentage_24h: coin.price_change_percentage_24h,
+      market_cap: coin.market_cap,
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching crypto data:', error);
+    // Return empty data instead of throwing to prevent app crash
     return coins.map(coin => ({
       id: coin,
       name: coin.charAt(0).toUpperCase() + coin.slice(1),
