@@ -234,7 +234,7 @@ const CryptoPage = () => {
                         <div className="bg-white p-4 rounded-lg shadow-sm">
                           <div className="flex items-center space-x-2 mb-3">
                             <TrendingUp className="text-gray-500" size={18} />
-                            <p className="text-sm font-medium text-gray-600">24h Price History</p>
+                            <p className="text-sm font-medium text-gray-600">Price History</p>
                           </div>
                           <div className="h-32">
                             {data.chartData.length > 0 ? (
