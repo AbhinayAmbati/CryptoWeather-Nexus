@@ -1,26 +1,4 @@
-import axios from 'axios';
-
-const API_KEY = process.env.NEXT_PUBLIC_COINGECKO_API_KEY;
-const BASE_URL = 'https://api.coingecko.com/api/v3';
-
-interface CoinGeckoResponse {
-  id: string;
-  symbol: string;
-  name: string;
-  market_data: {
-    current_price: {
-      usd: number;
-    };
-    price_change_percentage_24h: number;
-    market_cap: {
-      usd: number;
-    };
-    total_volume: {
-      usd: number;
-    };
-    circulating_supply: number;
-  };
-}
+const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';
 
 export interface CryptoData {
   id: string;
@@ -33,52 +11,68 @@ export interface CryptoData {
   circulatingSupply: number;
 }
 
-export const getCryptoData = async (ids: string[]): Promise<CryptoData[]> => {
-  try {
-    const response = await axios.get<CoinGeckoResponse[]>(`${BASE_URL}/coins/markets`, {
-      params: {
-        vs_currency: 'usd',
-        ids: ids.join(','),
-        order: 'market_cap_desc',
-        sparkline: false,
-        price_change_percentage: '24h',
-      },
-      headers: {
-        'x-cg-pro-api-key': API_KEY,
-      },
-    });
+export interface CryptoHistory {
+  prices: Array<[number, number]>;
+  market_caps: Array<[number, number]>;
+  total_volumes: Array<[number, number]>;
+}
 
-    return response.data.map((coin) => ({
+interface CoinGeckoMarketData {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  market_cap: number;
+  total_volume: number;
+  circulating_supply: number;
+}
+
+export async function getCryptoData(ids: string[]): Promise<CryptoData[]> {
+  try {
+    const response = await fetch(
+      `${COINGECKO_API_URL}/coins/markets?vs_currency=usd&ids=${ids.join(',')}&order=market_cap_desc&sparkline=false&price_change_percentage=24h`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: CoinGeckoMarketData[] = await response.json();
+    console.log('Crypto API Response:', data); // Debug log
+
+    return data.map((coin) => ({
       id: coin.id,
       symbol: coin.symbol.toUpperCase(),
       name: coin.name,
-      currentPrice: coin.market_data.current_price.usd,
-      priceChange24h: coin.market_data.price_change_percentage_24h,
-      marketCap: coin.market_data.market_cap.usd,
-      volume24h: coin.market_data.total_volume.usd,
-      circulatingSupply: coin.market_data.circulating_supply,
+      currentPrice: coin.current_price,
+      priceChange24h: coin.price_change_percentage_24h,
+      marketCap: coin.market_cap,
+      volume24h: coin.total_volume,
+      circulatingSupply: coin.circulating_supply,
     }));
   } catch (error) {
     console.error('Error fetching crypto data:', error);
     throw error;
   }
-};
+}
 
-export const getCryptoHistory = async (id: string, days: number = 1): Promise<Array<[number, number]>> => {
+export async function getCryptoHistory(id: string): Promise<Array<[number, number]>> {
   try {
-    const response = await axios.get(`${BASE_URL}/coins/${id}/market_chart`, {
-      params: {
-        vs_currency: 'usd',
-        days: days.toString(),
-      },
-      headers: {
-        'x-cg-pro-api-key': API_KEY,
-      },
-    });
+    const response = await fetch(
+      `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=usd&days=1&interval=hourly`
+    );
 
-    return response.data.prices;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: CryptoHistory = await response.json();
+    console.log(`Crypto History API Response for ${id}:`, data); // Debug log
+
+    return data.prices;
   } catch (error) {
-    console.error('Error fetching crypto history:', error);
+    console.error(`Error fetching crypto history for ${id}:`, error);
     throw error;
   }
-}; 
+} 
