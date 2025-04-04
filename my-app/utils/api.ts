@@ -7,6 +7,7 @@ export interface WeatherData {
   temperature: number;
   humidity: number;
   conditions: string;
+  icon: string;
 }
 
 export interface CryptoData {
@@ -64,6 +65,7 @@ export async function fetchWeatherData(cities: string[]): Promise<WeatherData[]>
         temperature: Math.round(data.main.temp),
         humidity: data.main.humidity,
         conditions: data.weather[0].main,
+        icon: data.weather[0].icon,
       });
     } catch (error) {
       console.error(`Error fetching weather data for ${city}:`, error);
@@ -72,6 +74,7 @@ export async function fetchWeatherData(cities: string[]): Promise<WeatherData[]>
         temperature: 0,
         humidity: 0,
         conditions: 'N/A',
+        icon: '01d', // Default clear sky icon
       });
     }
   }
