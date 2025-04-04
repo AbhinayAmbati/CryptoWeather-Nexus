@@ -24,6 +24,19 @@ export interface NewsData {
   pubDate: string;
 }
 
+interface NewsArticle {
+  title?: string;
+  description?: string;
+  link?: string;
+  pubDate?: string;
+}
+
+interface NewsArticleResponse {
+  status: string;
+  totalResults: number;
+  results: NewsArticle[];
+}
+
 export async function fetchWeatherData(cities: string[]): Promise<WeatherData[]> {
   const weatherData: WeatherData[] = [];
   
@@ -85,13 +98,25 @@ export async function fetchNewsData(): Promise<NewsData[]> {
     const response = await fetch(
       `https://newsdata.io/api/1/news?apikey=${NEWSDATA_API_KEY}&language=en&category=technology,business&size=5`
     );
-    const data = await response.json();
     
-    return data.results.map((article: any) => ({
-      title: article.title,
-      description: article.description,
-      link: article.link,
-      pubDate: new Date(article.pubDate).toLocaleDateString(),
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data: NewsArticleResponse = await response.json();
+    console.log('News API Response:', data); // Debug log
+
+    // Check if data.results exists and is an array
+    if (!data.results || !Array.isArray(data.results)) {
+      console.error('Invalid news data structure:', data);
+      return [];
+    }
+
+    return data.results.map((article: NewsArticle) => ({
+      title: article.title || 'No title available',
+      description: article.description || 'No description available',
+      link: article.link || '#',
+      pubDate: article.pubDate ? new Date(article.pubDate).toLocaleDateString() : 'Date not available',
     }));
   } catch (error) {
     console.error('Error fetching news data:', error);
