@@ -42,8 +42,8 @@ A modern dashboard application that provides real-time cryptocurrency prices, we
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/CryptoWeatherNexus.git
-cd CryptoWeatherNexus
+git clone https://github.com/AbhinayAmbati/CryptoWeather-Nexus.git
+cd CryptoWeather-Nexus
 ```
 
 2. Install dependencies:
@@ -132,7 +132,7 @@ The notification system is built using Sonner and supports:
   - Crypto price changes ≥1%
   - Weather condition changes
   - Temperature changes ≥5°C
-- **Testing**: Available through the "Test Alerts" button in navigation
+- **Testing**: Available through the "Test Notifications" button in navigation
 
 ## 🔐 Security
 
