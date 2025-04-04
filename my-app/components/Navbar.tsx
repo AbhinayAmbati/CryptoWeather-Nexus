@@ -100,7 +100,7 @@ const Navbar = () => {
                 className="flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 text-blue-100 hover:bg-white/10 hover:text-white cursor-pointer"
               >
                 <Bell className="h-5 w-5" />
-                <span>Test Alerts</span>
+                <span>Test Notifications</span>
               </button>
             </div>
           </div>
