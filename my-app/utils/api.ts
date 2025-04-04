@@ -45,8 +45,20 @@ export async function fetchWeatherData(cities: string[]): Promise<WeatherData[]>
       const response = await fetch(
         `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${OPENWEATHER_API_KEY}`
       );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
-      
+      console.log(`Weather API Response for ${city}:`, data); // Debug log
+
+      // Check if the required data exists
+      if (!data.main || !data.weather || !data.weather[0]) {
+        console.error(`Invalid weather data structure for ${city}:`, data);
+        throw new Error('Invalid weather data structure');
+      }
+
       weatherData.push({
         city,
         temperature: Math.round(data.main.temp),
