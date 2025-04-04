@@ -132,7 +132,7 @@ The notification system is built using Sonner and supports:
   - Crypto price changes ≥1%
   - Weather condition changes
   - Temperature changes ≥5°C
-- **Testing**: Available through the "Test Alerts" button in navigation
+- **Testing**: Available through the "Test Notifications" button in navigation
 
 ## 🔐 Security
 
