@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import Card from '@/components/ui/card';
-import PriceChart from '@/components/ui/PriceChart';
 import { getCryptoData, getCryptoHistory, CryptoData } from '@/services/cryptoService';
+import { ArrowUp, ArrowDown, DollarSign, BarChart, Layers, Globe } from 'lucide-react';
 
 const cryptocurrencies = [
-  { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', color: '#F7931A' },
-  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', color: '#627EEA' },
-  { id: 'solana', name: 'Solana', symbol: 'SOL', color: '#00FFA3' },
+  { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', color: '#F7931A', icon: '₿' },
+  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', color: '#627EEA', icon: 'Ξ' },
+  { id: 'solana', name: 'Solana', symbol: 'SOL', color: '#00FFA3', icon: 'Ꙩ' },
 ];
 
 interface CryptoState extends CryptoData {
@@ -109,96 +109,127 @@ const CryptoPage = () => {
       });
     };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
     return () => {
       ws.close();
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Cryptocurrency Dashboard</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cryptocurrencies.map((crypto) => {
-          const data = cryptoData[crypto.id];
-          
-          return (
-            <Card key={crypto.id} className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">{data.name}</h2>
-                <span className="text-gray-600">{data.symbol}</span>
-              </div>
-              
-              {data.loading ? (
-                <div className="flex justify-center items-center h-40">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                </div>
-              ) : data.error ? (
-                <div className="text-red-500 text-center">{data.error}</div>
-              ) : (
-                <>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Current Price</p>
-                        <p className="text-2xl font-bold">
-                          ${data.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">Cryptocurrency Dashboard</h1>
+        <p className="text-gray-500 text-center mb-8">Real-time prices and market data</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cryptocurrencies.map((crypto) => {
+            const data = cryptoData[crypto.id];
+            
+            return (
+              <Card key={crypto.id} className="overflow-hidden border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                        style={{ backgroundColor: crypto.color }}
+                      >
+                        {crypto.icon}
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">24h Change</p>
-                        <p className={`text-2xl font-bold ${data.priceChange24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {data.priceChange24h >= 0 ? '+' : ''}{data.priceChange24h.toFixed(2)}%
-                        </p>
+                        <h2 className="text-xl font-bold">{data.name}</h2>
+                        <span className="text-gray-500 text-sm">{data.symbol}</span>
                       </div>
                     </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-600">Market Cap</p>
-                      <p className="text-lg">
-                        ${(data.marketCap / 1e9).toFixed(2)}B
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-600">24h Volume</p>
-                      <p className="text-lg">
-                        ${(data.volume24h / 1e9).toFixed(2)}B
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-600">Circulating Supply</p>
-                      <p className="text-lg">
-                        {(data.circulatingSupply / 1e6).toFixed(2)}M {data.symbol}
-                      </p>
-                    </div>
+                    {!data.loading && !data.error && (
+                      <div className={`px-3 py-1 text-sm rounded-full ${data.priceChange24h >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {data.priceChange24h >= 0 ? '+' : ''}{data.priceChange24h.toFixed(2)}%
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-2">Price Chart (24h)</h3>
-                    <div className="h-40 bg-gray-100 rounded-lg">
-                      {data.history.length > 0 ? (
-                        <PriceChart data={data.history} color={crypto.color} />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <p className="text-gray-500">Loading chart data...</p>
-                        </div>
-                      )}
+                  {data.loading ? (
+                    <div className="flex justify-center items-center h-40">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
                     </div>
-                  </div>
-                </>
-              )}
-            </Card>
-          );
-        })}
+                  ) : data.error ? (
+                    <div className="bg-red-50 text-red-500 p-4 rounded-lg text-center">
+                      <span className="font-semibold">Error:</span> {data.error}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 gap-6">
+                          <div className="bg-white p-4 rounded-lg shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <DollarSign className="text-gray-500" size={18} />
+                                <p className="text-sm font-medium text-gray-600">Current Price</p>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                {data.priceChange24h >= 0 ? 
+                                  <ArrowUp className="text-green-500" size={16} /> : 
+                                  <ArrowDown className="text-red-500" size={16} />
+                                }
+                              </div>
+                            </div>
+                            <p className="text-3xl font-bold mt-1">
+                              ${data.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Globe className="text-gray-500" size={16} />
+                              <p className="text-sm text-gray-600">Market Cap</p>
+                            </div>
+                            <p className="text-sm font-semibold">
+                              ${(data.marketCap / 1e9).toFixed(2)}B
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <BarChart className="text-gray-500" size={16} />
+                              <p className="text-sm text-gray-600">24h Volume</p>
+                            </div>
+                            <p className="text-sm font-semibold">
+                              ${(data.volume24h / 1e9).toFixed(2)}B
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Layers className="text-gray-500" size={16} />
+                              <p className="text-sm text-gray-600">Circulating Supply</p>
+                            </div>
+                            <p className="text-sm font-semibold">
+                              {(data.circulatingSupply / 1e6).toFixed(2)}M {data.symbol}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {/* Card footer with gradient based on price change */}
+                {!data.loading && !data.error && (
+                  <div 
+                    className="h-2" 
+                    style={{ 
+                      backgroundColor: data.priceChange24h >= 0 ? crypto.color : '#FF4560',
+                      opacity: Math.min(Math.abs(data.priceChange24h) / 10, 1) * 0.8 + 0.2
+                    }}
+                  />
+                )}
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 };
 
-export default CryptoPage; 
+export default CryptoPage;
