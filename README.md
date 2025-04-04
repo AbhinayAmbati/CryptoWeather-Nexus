@@ -42,8 +42,8 @@ A modern dashboard application that provides real-time cryptocurrency prices, we
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/CryptoWeatherNexus.git
-cd CryptoWeatherNexus
+git clone https://github.com/AbhinayAmbati/CryptoWeather-Nexus.git
+cd CryptoWeather-Nexus
 ```
 
 2. Install dependencies:
