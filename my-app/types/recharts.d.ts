@@ -3,6 +3,7 @@ declare module 'recharts' {
 
   export interface CartesianGridProps {
     strokeDasharray?: string;
+    stroke?: string;
   }
 
   export interface TickProps {
@@ -14,11 +15,13 @@ declare module 'recharts' {
     tick?: TickProps;
     tickFormatter?: (value: string) => string;
     allowDataOverflow?: boolean;
+    interval?: string | number;
   }
 
   export interface YAxisProps {
     tick?: TickProps;
     tickFormatter?: (value: number) => string;
+    domain?: string[];
   }
 
   export interface TooltipProps<T, N> {
@@ -26,6 +29,9 @@ declare module 'recharts' {
     active?: boolean;
     payload?: Array<{ value: T; name: N }>;
     label?: string;
+    formatter?: (value: T) => [string, string];
+    labelFormatter?: (label: string) => string;
+    contentStyle?: React.CSSProperties;
   }
 
   export interface TooltipContentProps<T, N> {
@@ -40,12 +46,13 @@ declare module 'recharts' {
     stroke?: string;
     strokeWidth?: number;
     dot?: boolean;
-    activeDot?: { r: number };
+    activeDot?: { r: number; fill?: string };
   }
 
   export interface LineChartProps {
     data?: Array<{ [key: string]: string | number }>;
     children?: React.ReactNode;
+    margin?: { top?: number; right?: number; bottom?: number; left?: number };
   }
 
   export interface ResponsiveContainerProps {

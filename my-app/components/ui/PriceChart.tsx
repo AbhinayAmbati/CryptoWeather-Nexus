@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps,
 } from "recharts";
 
 interface PriceChartProps {
@@ -24,61 +23,57 @@ interface ChartData {
 const PriceChart: React.FC<PriceChartProps> = ({ data, color = "#8884d8" }) => {
   // Transform the data for the chart
   const chartData: ChartData[] = data.map(([timestamp, price]) => ({
-    time: new Date(timestamp).toLocaleTimeString(),
-    price,
+    time: new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    price: Number(price.toFixed(2)),
   }));
 
   // Format the price for the tooltip
   const formatPrice = (value: number) => {
-    return `$${value.toLocaleString(undefined, {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    })}`;
-  };
-
-  const CustomTooltip: React.FC<TooltipProps<number, string>> = ({
-    active,
-    payload,
-    label,
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-2 border border-gray-200 rounded shadow">
-          <p className="text-sm text-gray-600">{`Time: ${label}`}</p>
-          <p className="text-sm font-medium">{`Price: ${formatPrice(
-            payload[0].value || 0
-          )}`}</p>
-        </div>
-      );
-    }
-    return null;
+    }).format(value);
   };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis
-          dataKey="time"
-          tick={{ fontSize: 12 }}
-          tickFormatter={(value: string) => value.split(":").slice(0, 2).join(":")}
-          allowDataOverflow={true}
-        />
-        <YAxis
-          tick={{ fontSize: 12 }}
-          tickFormatter={(value: number) => `$${value.toLocaleString()}`}
-        />
-        <Tooltip content={CustomTooltip} />
-        <Line
-          type="monotone"
-          dataKey="price"
-          stroke={color}
-          strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 4 }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="w-full h-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis 
+            dataKey="time" 
+            tick={{ fontSize: 10 }}
+            tickFormatter={(value: string) => value}
+            interval="preserveStartEnd"
+          />
+          <YAxis 
+            tick={{ fontSize: 10 }}
+            tickFormatter={(value: number) => formatPrice(value)}
+            domain={['auto', 'auto']}
+          />
+          <Tooltip 
+            formatter={(value: number) => [formatPrice(value), 'Price']}
+            labelFormatter={(label: string) => `Time: ${label}`}
+            contentStyle={{
+              backgroundColor: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '0.375rem',
+              padding: '0.5rem',
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="price"
+            stroke={color}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, fill: color }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 

@@ -100,6 +100,7 @@ export async function fetchCryptoData(coins: string[]): Promise<CryptoData[]> {
       throw new Error('No data returned from the API');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return data.map((coin: any) => ({
       id: coin.id,
       name: coin.name,
@@ -107,6 +108,7 @@ export async function fetchCryptoData(coins: string[]): Promise<CryptoData[]> {
       price_change_percentage_24h: coin.price_change_percentage_24h,
       market_cap: coin.market_cap,
     }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Error fetching crypto data:', error);
     // Return empty data instead of throwing to prevent app crash
