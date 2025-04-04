@@ -63,9 +63,9 @@ export async function getCryptoHistory(id: string): Promise<Array<[number, numbe
       `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=usd&days=1&interval=hourly`
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    // if (!response.ok) {
+    //   throw new Error(`HTTP error! status: ${response.status}`);
+    // }
 
     const data: CryptoHistory = await response.json();
     console.log(`Crypto History API Response for ${id}:`, data); // Debug log
