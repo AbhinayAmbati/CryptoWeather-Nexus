@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { getCryptoData, getCryptoHistory, CryptoData } from '@/services/cryptoService';
 import { ArrowUp, ArrowDown, DollarSign, BarChart, Layers, Globe, TrendingUp } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 const cryptocurrencies = [
   { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', color: '#F7931A', icon: '₿' },
@@ -20,6 +21,7 @@ interface CryptoState extends CryptoData {
 }
 
 const CryptoPage = () => {
+  const { showNotification } = useNotifications();
   const [cryptoData, setCryptoData] = useState<Record<string, CryptoState>>(
     cryptocurrencies.reduce((acc, crypto) => ({
       ...acc,
@@ -37,7 +39,7 @@ const CryptoPage = () => {
         history: [],
         chartData: [],
       }
-    }), {})
+    }), {} as Record<string, CryptoState>)
   );
 
   useEffect(() => {
@@ -54,7 +56,22 @@ const CryptoPage = () => {
             history: [],
             chartData: [],
           }
-        }), {});
+        }), {} as Record<string, CryptoState>);
+
+        // Check for significant price changes
+        Object.entries(updatedData).forEach(([id, newData]: [string, CryptoState]) => {
+          const oldData = cryptoData[id];
+          if (oldData && !oldData.loading && !oldData.error) {
+            const priceChange = ((newData.currentPrice - oldData.currentPrice) / oldData.currentPrice) * 100;
+            if (Math.abs(priceChange) >= 1) { // Alert on 1% or greater change
+              const direction = priceChange > 0 ? 'increased' : 'decreased';
+              showNotification(
+                'price_alert',
+                `${newData.name} has ${direction} by ${Math.abs(priceChange).toFixed(2)}% in the last update`
+              );
+            }
+          }
+        });
 
         setCryptoData(prev => ({
           ...prev,
@@ -66,11 +83,12 @@ const CryptoPage = () => {
           try {
             const history = await getCryptoHistory(crypto.id);
           
+            // Check for undefined, null, or invalid data
             // if (!Array.isArray(history)) {
-            //   throw new Error(`Invalid history data for ${crypto.id}`);
+            //   console.error(`Invalid history for ${crypto.id}:`, history);
+            //   return; // exit early to avoid crash
             // }
           
-            // Convert history data to chart format
             const chartData = history.map(([timestamp, price]) => {
               const date = new Date(timestamp);
               const hours = date.getHours().toString().padStart(2, '0');
@@ -92,7 +110,8 @@ const CryptoPage = () => {
             }));
           } catch (error) {
             console.error(`Error fetching history for ${crypto.id}:`, error);
-          }
+          }          
+          
           
         }
       } catch (error) {
@@ -123,10 +142,21 @@ const CryptoPage = () => {
         Object.entries(data).forEach(([id, price]) => {
           if (newState[id]) {
             const newPrice = Number(price);
+            const oldPrice = newState[id].currentPrice;
+            const priceChange = ((newPrice - oldPrice) / oldPrice) * 100;
+
+            // Alert on significant real-time price changes
+            if (Math.abs(priceChange) >= 1) {
+              const direction = priceChange > 0 ? 'increased' : 'decreased';
+              showNotification(
+                'price_alert',
+                `${newState[id].name} has ${direction} by ${Math.abs(priceChange).toFixed(2)}% in real-time`
+              );
+            }
+
             newState[id] = {
               ...newState[id],
               currentPrice: newPrice,
-              // Add the new price point to chart data
               chartData: [...newState[id].chartData, {
                 time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
                 price: newPrice

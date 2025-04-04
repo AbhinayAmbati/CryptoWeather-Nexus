@@ -4,11 +4,37 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Home, Cloud, BarChart2, Newspaper, Menu, X } from 'lucide-react';
+import { Home, Cloud, BarChart2, Newspaper, Menu, X, Bell } from 'lucide-react';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 const Navbar = () => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { showNotification } = useNotifications();
+
+  const testNotifications = () => {
+    // Test crypto price alert
+    showNotification(
+      'price_alert',
+      'Bitcoin has increased by 2.5% in the last hour'
+    );
+
+    // Test weather alert after 1 second
+    setTimeout(() => {
+      showNotification(
+        'weather_alert',
+        'Weather in New York has changed from Sunny to Cloudy'
+      );
+    }, 1000);
+
+    // Test another price alert after 2 seconds
+    setTimeout(() => {
+      showNotification(
+        'price_alert',
+        'Ethereum has decreased by 1.8% in real-time'
+      );
+    }, 2000);
+  };
 
   const navItems = [
     { 
@@ -69,6 +95,13 @@ const Navbar = () => {
                   <span>{item.name}</span>
                 </Link>
               ))}
+              <button
+                onClick={testNotifications}
+                className="flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 text-blue-100 hover:bg-white/10 hover:text-white cursor-pointer"
+              >
+                <Bell className="h-5 w-5" />
+                <span>Test Alerts</span>
+              </button>
             </div>
           </div>
 
@@ -115,6 +148,13 @@ const Navbar = () => {
               <span>{item.name}</span>
             </Link>
           ))}
+          <button
+            onClick={testNotifications}
+            className="flex items-center space-x-3 px-4 py-3 w-full rounded-md text-base font-medium transition-all duration-200 text-blue-100 hover:bg-white/10 hover:text-white"
+          >
+            <Bell className="h-5 w-5" />
+            <span>Test Alerts</span>
+          </button>
         </div>
       </div>
     </nav>

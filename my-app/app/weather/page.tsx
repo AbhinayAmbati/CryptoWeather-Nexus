@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import {Card} from '@/components/ui/card';
 import { getCurrentWeather, getForecast, WeatherData, ForecastData } from '@/services/weatherService';
 import { Cloud, CloudRain, Droplets, Wind, Gauge, Sun, Thermometer, Calendar, Loader, Globe } from 'lucide-react';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 const cities = [
   { name: 'New York', lat: 40.7128, lon: -74.0060, icon: '🌆', color: '#4361ee' },
@@ -22,67 +23,98 @@ const getWeatherIconComponent = (condition: string | undefined) => {
   return <Cloud />;
 };
 
-interface CityWeather {
-  current: WeatherData | null;
-  forecast: ForecastData[] | null;
-  loading: boolean;
-  error: string | null;
-}
-
 const WeatherPage = () => {
-  const [weatherData, setWeatherData] = useState<Record<string, CityWeather>>(
-    cities.reduce((acc, city) => ({
-      ...acc,
-      [city.name]: { current: null, forecast: null, loading: true, error: null }
-    }), {})
-  );
+  const { showNotification } = useNotifications();
+  const [weatherData, setWeatherData] = useState<Record<string, {
+    current: WeatherData | null;
+    forecast: ForecastData[];
+    loading: boolean;
+    error: string | null;
+    lastConditions?: string;
+  }>>({});
 
   useEffect(() => {
     const fetchWeatherData = async () => {
-      for (const city of cities) {
-        try {
-          console.log(`Fetching weather data for ${city.name}...`);
-          
+      try {
+        const weatherPromises = cities.map(async (city) => {
           const [current, forecast] = await Promise.all([
             getCurrentWeather(city.lat, city.lon),
             getForecast(city.lat, city.lon)
           ]);
-          
-          console.log(`${city.name} current weather data:`, current);
-          console.log(`${city.name} forecast data:`, forecast);
 
-          setWeatherData(prev => ({
-            ...prev,
-            [city.name]: {
+          // Check for condition changes
+          const oldData = weatherData[city.name];
+          if (oldData?.current && !oldData.loading && !oldData.error) {
+            if (oldData.current.conditions !== current.conditions) {
+              showNotification(
+                'weather_alert',
+                `Weather in ${city.name} has changed from ${oldData.current.conditions} to ${current.conditions}`
+              );
+            }
+
+            // Check for significant temperature changes (more than 5°C)
+            const tempChange = current.temp - oldData.current.temp;
+            if (Math.abs(tempChange) >= 5) {
+              const direction = tempChange > 0 ? 'increased' : 'decreased';
+              showNotification(
+                'weather_alert',
+                `Temperature in ${city.name} has ${direction} by ${Math.abs(tempChange).toFixed(1)}°C`
+              );
+            }
+          }
+
+          return {
+            name: city.name,
+            data: {
               current,
               forecast,
               loading: false,
-              error: null
+              error: null,
+              lastConditions: current.conditions
             }
-          }));
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
-          console.error(`Error fetching weather data for ${city.name}:`, error);
-          
-          setWeatherData(prev => ({
-            ...prev,
-            [city.name]: {
-              current: null,
-              forecast: null,
+          };
+        });
+
+        const results = await Promise.all(weatherPromises);
+        const newWeatherData = results.reduce((acc, { name, data }) => ({
+          ...acc,
+          [name]: data
+        }), {});
+
+        setWeatherData(newWeatherData);
+      } catch (error) {
+        console.error('Error fetching weather data:', error);
+        setWeatherData(prev => {
+          const newState = { ...prev };
+          cities.forEach(city => {
+            newState[city.name] = {
+              ...newState[city.name],
               loading: false,
               error: 'Failed to fetch weather data'
-            }
-          }));
-        }
+            };
+          });
+          return newState;
+        });
       }
     };
 
+    // Initialize weather data
+    cities.forEach(city => {
+      setWeatherData(prev => ({
+        ...prev,
+        [city.name]: {
+          current: null,
+          forecast: [],
+          loading: true,
+          error: null
+        }
+      }));
+    });
+
     fetchWeatherData();
-    
-    // Log the complete state after all data is fetched
-    return () => {
-      console.log('Final weather data state:', weatherData);
-    };
+    const interval = setInterval(fetchWeatherData, 5 * 60 * 1000); // Update every 5 minutes
+
+    return () => clearInterval(interval);
   }, []);
 
   // Debug log when state changes
@@ -142,11 +174,11 @@ const WeatherPage = () => {
                 </div>
                 
                 <div className="p-6 bg-white">
-                  {data.loading ? (
+                  {data?.loading ? (
                     <div className="flex justify-center items-center h-48">
                       <Loader className="h-8 w-8 text-gray-400 animate-spin" />
                     </div>
-                  ) : data.error ? (
+                  ) : data?.error ? (
                     <div className="text-red-500 text-center p-6 bg-red-50 rounded-lg">
                       <div className="flex flex-col items-center">
                         <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
@@ -165,18 +197,18 @@ const WeatherPage = () => {
                         <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl">
                           <div className="flex items-center">
                             <div className="mr-4">
-                              {getWeatherIconComponent(data.current?.conditions)}
+                              {getWeatherIconComponent(data?.current?.conditions)}
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-500">{data.current?.conditions}</p>
+                              <p className="text-sm font-medium text-gray-500">{data?.current?.conditions}</p>
                               <div className="flex items-baseline">
                                 <Thermometer size={16} className="text-gray-400 mr-1" />
-                                <p className="text-4xl font-bold text-gray-800">{data.current?.temp.toFixed(1)}°C</p>
+                                <p className="text-4xl font-bold text-gray-800">{data?.current?.temp.toFixed(1)}°C</p>
                               </div>
                             </div>
                           </div>
                           
-                          {data.current?.icon && (
+                          {data?.current?.icon && (
                             <img
                               src={getWeatherIcon(data.current.icon)}
                               alt={data.current.conditions}
@@ -191,7 +223,7 @@ const WeatherPage = () => {
                             <Droplets size={18} className="text-blue-500 mr-2" />
                             <div>
                               <p className="text-xs text-gray-500">Humidity</p>
-                              <p className="text-sm font-semibold">{data.current?.humidity}%</p>
+                              <p className="text-sm font-semibold">{data?.current?.humidity}%</p>
                             </div>
                           </div>
                           
@@ -199,7 +231,7 @@ const WeatherPage = () => {
                             <Wind size={18} className="text-green-500 mr-2" />
                             <div>
                               <p className="text-xs text-gray-500">Wind Speed</p>
-                              <p className="text-sm font-semibold">{data.current?.windSpeed.toFixed(1)} km/h</p>
+                              <p className="text-sm font-semibold">{data?.current?.windSpeed.toFixed(1)} km/h</p>
                             </div>
                           </div>
                           
@@ -207,7 +239,7 @@ const WeatherPage = () => {
                             <Gauge size={18} className="text-purple-500 mr-2" />
                             <div>
                               <p className="text-xs text-gray-500">Pressure</p>
-                              <p className="text-sm font-semibold">{data.current?.pressure} hPa</p>
+                              <p className="text-sm font-semibold">{data?.current?.pressure} hPa</p>
                             </div>
                           </div>
                           
@@ -228,7 +260,7 @@ const WeatherPage = () => {
                           </div>
                           
                           <div className="space-y-2">
-                            {data.forecast?.map((day, index) => {
+                            {data?.forecast?.map((day, index) => {
                               console.log(`Rendering forecast day ${index}:`, day);
                               return (
                                 <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">

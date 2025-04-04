@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,8 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navbar />
-        <main>{children}</main>
+        <NotificationProvider>
+          <Navbar />
+          <main>{children}</main>
+          <Toaster position="top-right" richColors closeButton />
+        </NotificationProvider>
       </body>
     </html>
   );
